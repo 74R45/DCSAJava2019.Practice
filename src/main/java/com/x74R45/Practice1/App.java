@@ -1,11 +1,5 @@
 package com.x74R45.Practice1;
 
-import org.apache.commons.codec.digest.DigestUtils;
-
-/**
- * Hello world!
- *
- */
 public class App 
 {
 	public static void main(String[] args) {
@@ -14,11 +8,9 @@ public class App
             System.err.println("Please provide an input!");
             System.exit(0);
         }
-        System.out.println(sha256hex(args[0]));
-
-    }
-
-    public static String sha256hex(String input) {
-        return DigestUtils.sha256Hex(input);
+        
+        byte[] message = args[0].getBytes();
+        
+        System.out.println(Receiver.validate(Sender.send(message, 1, 1)));
     }
 }
