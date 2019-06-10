@@ -1,8 +1,10 @@
-package com.x74R45.Practice1;
+package com.x74R45.protocol;
 
 import static org.junit.Assert.*;
 
 import org.junit.Test;
+
+import com.x74R45.protocol.CRC16;
 
 public class CRC16Test {
 

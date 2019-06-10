@@ -1,9 +1,8 @@
-package com.x74R45.Practice1;
+package com.x74R45.protocol;
 
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
-import java.util.Arrays;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
@@ -12,25 +11,21 @@ import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
 
 public class App {
-	public static void main(String[] args) {
 
-        if (args.length < 1) {
-            System.err.println("Please provide an input!");
-            System.exit(0);
-        }
-        
-        byte[] message = args[0].getBytes();
-        
-        byte[] iv = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-        IvParameterSpec ivspec = new IvParameterSpec(iv);
-        
-        KeyGenerator keyGen;
+	public static void main(String[] args) {
+		byte[] iv = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
+		IvParameterSpec ivspec = new IvParameterSpec(iv);
+		KeyGenerator keyGen;
 		try {
 			keyGen = KeyGenerator.getInstance("AES");
 			SecretKey key = keyGen.generateKey();
-			byte[] pkg = Sender.send(message, 1, 1, key, ivspec);
-			System.out.println("Package: " + Arrays.toString(pkg));
-			System.out.println("Validated? " + Receiver.validate(pkg));
+			Generator.generateRandom(key, ivspec);
+			Generator.commandAddItemToGroup("buckwheat", "food", key, ivspec);
+			Generator.commandAdd("buckwheat", 40, key, ivspec);
+			Generator.commandSetPrice("buckwheat", 1000, key, ivspec);
+			Generator.commandCount("buckwheat", key, ivspec);
+			Generator.commandAddGroup("stuff", key, ivspec);
+			Generator.commandSubtract("buckwheat", 4, key, ivspec);
 		} catch (NoSuchAlgorithmException e) {
 			System.err.println("Error: KeyGenerator couldn't find an algorithm named \"AES\".");
 		} catch (InvalidKeyException e) {
@@ -42,5 +37,6 @@ public class App {
 		} catch (InvalidAlgorithmParameterException e) {
 			System.err.println("Error: Sender threw an InvalidAlgorithmParameterException.");
 		}
+		System.out.println("MessageChecker: " + MessageChecker.check());
     }
 }

@@ -1,4 +1,4 @@
-package com.x74R45.Practice1;
+package com.x74R45.protocol;
 
 /******************************************************************************
  *  Compilation:  javac CRC16.java

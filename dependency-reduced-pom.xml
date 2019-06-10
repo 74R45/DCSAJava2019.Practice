@@ -20,7 +20,7 @@
             <configuration>
               <transformers>
                 <transformer>
-                  <mainClass>com.x74R45.Practice1.App</mainClass>
+                  <mainClass>com.x74R45.protocol.App</mainClass>
                 </transformer>
               </transformers>
             </configuration>
