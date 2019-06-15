@@ -4,22 +4,21 @@ import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
-import java.security.Key;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.spec.IvParameterSpec;
 
 public class Processor {
 
-	public static void process(Message mes, Key key, IvParameterSpec ivspec) throws IllegalBlockSizeException, BadPaddingException, InvalidKeyException, InvalidAlgorithmParameterException {
+	public static Message process(Message mes) throws IllegalBlockSizeException, BadPaddingException, InvalidKeyException, InvalidAlgorithmParameterException {
 		
 		// Processing the message...
 		MessageChecker.addReceived(mes);
 		switch (mes.getType()) {
 		case 0:
 			try {
-				System.out.println(Storage.countItem(new String(mes.getMessage(), "UTF-8")));
+				int res = Storage.countItem(new String(mes.getMessage(), "UTF-8"));
+				return new Message((byte) 0, 2020, 0, ByteBuffer.allocate(4).putInt(res).array());
 			} catch (UnsupportedEncodingException e) {
 				e.printStackTrace();
 			}
@@ -106,9 +105,7 @@ public class Processor {
 			break;
 		}
 		
-		if (mes.getType() != 2020) {
-			String answer = "Ok";
-			Encryptor.encrypt(new Message((byte) 0, 2020, 0, answer.getBytes()), key, ivspec);
-		}
+		// Message of type 2020 means that it is a reply from server with message "Ok"
+		return new Message((byte) 0, 2020, 0, "Ok".getBytes());
 	}
 }
