@@ -22,5 +22,6 @@
 			<attribute name="maven.pomderived" value="true"/>
 		</attributes>
 	</classpathentry>
+	<classpathentry kind="lib" path="C:/Users/74R45/DevClientServerApps/Kreshchenko_Practice1/mysql-connector-java-8.0.16.jar"/>
 	<classpathentry kind="output" path="target/classes"/>
 </classpath>

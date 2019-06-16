@@ -13,10 +13,8 @@ import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.Key;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Set;
-import java.util.Vector;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
@@ -36,6 +34,7 @@ public class StoreServerTCP implements Runnable {
 	
 	public void run() {
 		try {
+			DBInteractor.initialize();
 			KeyStorage.clearKeys();
 			ServerSocketChannel ssc = ServerSocketChannel.open();
 			ssc.configureBlocking(false);
@@ -50,7 +49,9 @@ public class StoreServerTCP implements Runnable {
 				if (selector.select() == 0)
 					continue;
 				
+				@SuppressWarnings("rawtypes")
 				Set keys = selector.selectedKeys();
+				@SuppressWarnings("rawtypes")
 				Iterator it = keys.iterator();
 				
 				while (it.hasNext()) {

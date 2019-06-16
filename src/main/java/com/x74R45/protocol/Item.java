@@ -5,7 +5,7 @@ public class Item {
 	private String name;
 	private int amount;
 	private int price;
-	
+
 	public Item(String name, int amount, int price) {
 		this.name = name;
 		this.amount = amount;
@@ -41,5 +41,10 @@ public class Item {
 	
 	public void setPrice(int price) {
 		this.price = price;
+	}
+	
+	@Override
+	public String toString() {
+		return "Item [name=" + name + ", amount=" + amount + ", price=" + price + "]";
 	}
 }

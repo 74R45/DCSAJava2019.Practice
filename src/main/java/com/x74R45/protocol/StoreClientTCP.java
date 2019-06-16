@@ -22,11 +22,8 @@ public class StoreClientTCP implements Runnable {
 	private Message mes;
 	
 	public static void main(String args[]) throws Exception {
-		int numThreads = 10;
-        new StoreClientTCP(1, Generator.commandAddItemToGroup("rice", "food"));
-        Thread.sleep(1000);
-        new StoreClientTCP(numThreads, Generator.commandAdd("rice", 15));
-        Thread.sleep(1000);
+        new StoreClientTCP(10, Generator.commandAdd("rice", 15));
+        Thread.sleep(1500);
         new StoreClientTCP(1, Generator.commandCount("rice"));
     }
 	

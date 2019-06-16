@@ -5,13 +5,10 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
-import java.net.InetSocketAddress;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.Key;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
-import java.util.Vector;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
@@ -22,6 +19,7 @@ public class StoreServerUDP {
 	
 	public static void main(String[] args) {
 		try {
+			DBInteractor.initialize();
 			KeyStorage.clearKeys();
 			DatagramSocket socket = new DatagramSocket(4445);
 
@@ -34,9 +32,7 @@ public class StoreServerUDP {
             	DatagramPacket packet = new DatagramPacket(buf, buf.length);
                 socket.receive(packet);
                 
-                ArrayList<Vector<Object>> keys = KeyStorage.getKeys();
                 Key key;
-                
                 if((key = KeyStorage.getKey(packet.getPort())) != null 
                 		|| Validator.validate(packet.getData())) {
                 	

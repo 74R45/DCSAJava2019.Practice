@@ -4,6 +4,7 @@ import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
+import java.sql.SQLException;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
@@ -17,8 +18,13 @@ public class Processor {
 		switch (mes.getType()) {
 		case 0:
 			try {
-				int res = Storage.countItem(new String(mes.getMessage(), "UTF-8"));
-				return new Message((byte) 0, 2020, 0, ByteBuffer.allocate(4).putInt(res).array());
+				try {
+					int res = Storage.countItem(new String(mes.getMessage(), "UTF-8"));
+					return new Message((byte) 0, 2020, 0, ByteBuffer.allocate(4).putInt(res).array());
+				} catch (SQLException e) {
+					e.printStackTrace();
+					return new Message((byte) 0, 1010, 0, "SQLException".getBytes());
+				}
 			} catch (UnsupportedEncodingException e) {
 				e.printStackTrace();
 			}
@@ -35,7 +41,12 @@ public class Processor {
 					nameArr[i] = mes.getMessage()[i+4];		
 				String name = new String(nameArr, "UTF-8");
 				
-				Storage.addItems(name, amount);
+				try {
+					Storage.addItem(name, amount);
+				} catch (SQLException e) {
+					e.printStackTrace();
+					return new Message((byte) 0, 1010, 0, "SQLException".getBytes());
+				}
 			} catch (UnsupportedEncodingException e) {
 				e.printStackTrace();
 			}
@@ -52,14 +63,24 @@ public class Processor {
 					nameArr[i] = mes.getMessage()[i+4];		
 				String name = new String(nameArr, "UTF-8");
 				
-				Storage.subtractItems(name, amount);
+				try {
+					Storage.subtractItem(name, amount);
+				} catch (SQLException e) {
+					e.printStackTrace();
+					return new Message((byte) 0, 1010, 0, "SQLException".getBytes());
+				}
 			} catch (UnsupportedEncodingException e) {
 				e.printStackTrace();
 			}
 			break;
 		case 3:
 			try {
-				Storage.addGroup(new String(mes.getMessage(), "UTF-8"));
+				try {
+					Storage.addGroup(new String(mes.getMessage(), "UTF-8"));
+				} catch (SQLException e) {
+					e.printStackTrace();
+					return new Message((byte) 0, 1010, 0, "SQLException".getBytes());
+				}
 			} catch (UnsupportedEncodingException e) {
 				e.printStackTrace();
 			}
@@ -81,7 +102,12 @@ public class Processor {
 					groupNameArr[i] = mes.getMessage()[i+len+4];
 				String groupName = new String(groupNameArr, "UTF-8");
 				
-				Storage.addItemToGroup(itemName, groupName);
+				try {
+					Storage.addItemToGroup(itemName, groupName);
+				} catch (SQLException e) {
+					e.printStackTrace();
+					return new Message((byte) 0, 1010, 0, "SQLException".getBytes());
+				}
 			} catch (UnsupportedEncodingException e) {
 				e.printStackTrace();
 			}
@@ -98,7 +124,36 @@ public class Processor {
 					nameArr[i] = mes.getMessage()[i+4];		
 				String name = new String(nameArr, "UTF-8");
 				
-				Storage.setPrice(name, price);
+				try {
+					Storage.setPrice(name, price);
+				} catch (SQLException e) {
+					e.printStackTrace();
+					return new Message((byte) 0, 1010, 0, "SQLException".getBytes());
+				}
+			} catch (UnsupportedEncodingException e) {
+				e.printStackTrace();
+			}
+			break;
+		case 6:
+			try {
+				try {
+					Storage.deleteItem(new String(mes.getMessage(), "UTF-8"));
+				} catch (SQLException e) {
+					e.printStackTrace();
+					return new Message((byte) 0, 1010, 0, "SQLException".getBytes());
+				}
+			} catch (UnsupportedEncodingException e) {
+				e.printStackTrace();
+			}
+			break;
+		case 7:
+			try {
+				try {
+					Storage.deleteGroup(new String(mes.getMessage(), "UTF-8"));
+				} catch (SQLException e) {
+					e.printStackTrace();
+					return new Message((byte) 0, 1010, 0, "SQLException".getBytes());
+				}
 			} catch (UnsupportedEncodingException e) {
 				e.printStackTrace();
 			}

@@ -2,7 +2,7 @@ com\x74R45\protocol\StoreClientUDP.class
 com\x74R45\protocol\CRC16.class
 com\x74R45\protocol\KeyStorage.class
 com\x74R45\protocol\StoreServerTCP.class
-com\x74R45\protocol\Group.class
+com\x74R45\protocol\DBInteractor.class
 com\x74R45\protocol\Validator.class
 com\x74R45\protocol\Decryptor.class
 com\x74R45\protocol\Encryptor.class

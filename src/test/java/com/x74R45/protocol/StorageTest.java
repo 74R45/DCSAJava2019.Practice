@@ -2,45 +2,80 @@ package com.x74R45.protocol;
 
 import static org.junit.Assert.*;
 
+import java.sql.SQLException;
+import java.util.ArrayList;
+
+import org.junit.Before;
 import org.junit.Test;
 
+// The database needs to be empty.
 public class StorageTest {
+
+	private static boolean DBInitialized = false;
+	
+	@Before
+	public void setup() {
+		if (!DBInitialized) {
+			DBInteractor.initialize();
+			DBInitialized = true;
+		}
+	}
 	
 	@Test
-	public void zeroItemsTest() {
-		assertEquals(0, Storage.totalItems());
-	}
-
-	@Test
 	public void groupsAndItemsTest() {
-		Storage.addItemToGroup("buckwheat", "group 1");
-		Storage.addItemToGroup("rice", "group 1");
-		Storage.addItemToGroup("wheat", "group 2");
-		Storage.addItems("buckwheat", 3);
-		Storage.addItems("rice", 0);
-		Storage.addItems("wheat", -3);
-		
-		assertEquals(3, Storage.countItem("buckwheat"));
-		assertEquals(0, Storage.countItem("rice"));
-		assertEquals(0, Storage.countItem("wheat"));
-		assertEquals(3, Storage.totalItems());
-		
-		Storage.subtractItems("buckwheat", 4);
-		assertEquals(0, Storage.countItem("buckwheat"));
-		
-		Storage.addItems("buckwheat", 15);
-		Storage.subtractItems("buckwheat", 10);
-		assertEquals(5, Storage.countItem("buckwheat"));
-		Storage.clear();
-		assertEquals(0, Storage.totalItems());
+		try {
+			Storage.addGroup("group1");
+			Storage.addGroup("group2");
+			Storage.addItem("buckwheat", 3);
+			Storage.addItem("rice", 0);
+			Storage.addItem("wheat", -3);
+			Storage.addItemToGroup("buckwheat", "group1");
+			Storage.addItemToGroup("rice", "group1");
+			Storage.addItemToGroup("wheat", "group2");
+			
+			assertEquals(3, Storage.countItem("buckwheat"));
+			assertEquals(0, Storage.countItem("rice"));
+			assertEquals(0, Storage.countItem("wheat"));
+			
+			Storage.subtractItem("buckwheat", 4);
+			assertEquals(0, Storage.countItem("buckwheat"));
+			
+			Storage.addItem("buckwheat", 15);
+			Storage.subtractItem("buckwheat", 10);
+			assertEquals(5, Storage.countItem("buckwheat"));
+			
+			ArrayList<Item> items = Storage.getItemsInGroup("group1");
+			boolean buckwheat = false, rice = false;
+			for (Item i : items) {
+				if (i.getName().equals("buckwheat") && i.getAmount() == 5 && i.getPrice() == 0)
+					buckwheat = true;
+				if (i.getName().equals("rice") && i.getAmount() == 0 && i.getPrice() == 0)
+					rice = true;
+			}
+			assertTrue(buckwheat && rice && items.size() == 2);
+			
+			Storage.deleteGroup("group1");
+			Storage.deleteGroup("group2");
+			Storage.deleteItem("buckwheat");
+			Storage.deleteItem("rice");
+			Storage.deleteItem("wheat");
+		} catch (SQLException e) {
+			e.printStackTrace();
+			fail("An SQLException has been thrown.");
+		}
 	}
 	
 	@Test
 	public void priceTest() {
-		Storage.addItemToGroup("bread", "food");
-		Storage.setPrice("bread", 1000);
-		
-		assertEquals(1000, Storage.getPrice("bread"));
+		try {
+			Storage.addItem("bread", 10);
+			Storage.setPrice("bread", 1000);
+			assertEquals(1000, Storage.getPrice("bread"));
+			Storage.deleteItem("bread");
+		} catch (SQLException e) {
+			e.printStackTrace();
+			fail("An SQLException has been thrown.");
+		}
 	}
 	
 	private class Truck implements Runnable {
@@ -54,13 +89,16 @@ public class StorageTest {
 		}
 		
 		public void run() {
-			Storage.addItems(item, amount);
+			try {
+				Storage.addItem(item, amount);
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
 		}
 	}
 	
 	@Test
 	public void threadsTest() {
-		Storage.addItemToGroup("buckwheat", "food");
 		Thread t1 = new Thread(new Truck("buckwheat", 10));
 		Thread t2 = new Thread(new Truck("buckwheat", 20));
 		Thread t3 = new Thread(new Truck("buckwheat", 50));
@@ -80,7 +118,12 @@ public class StorageTest {
 			e.printStackTrace();
 		}
 		
-		assertEquals(358, Storage.countItem("buckwheat"));
-		Storage.clear();
+		try {
+			assertEquals(358, Storage.countItem("buckwheat"));
+			Storage.deleteItem("buckwheat");
+		} catch (SQLException e) {
+			e.printStackTrace();
+			fail("An SQLException has been thrown.");
+		}
 	}
 }

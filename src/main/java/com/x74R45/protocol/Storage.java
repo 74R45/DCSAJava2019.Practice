@@ -1,24 +1,34 @@
 package com.x74R45.protocol;
 
+import java.math.BigDecimal;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 
 public class Storage {
-
-	private static volatile ArrayList<Item> items = new ArrayList<Item>();
-	private static volatile ArrayList<Group> groups = new ArrayList<Group>();
+	
+	private static Object locker = new Object();
 	
 	/* Command 0
 	 * Format of the message: 
 	 *   0-end itemName
 	 */
-	public static int countItem(String itemName) {
-		for (Item i : items) {
-			if (i.getName().equals(itemName)) {
-				return i.getAmount();
-			}
+	public static int countItem(String itemName) throws SQLException {
+		synchronized (locker) {
+			System.out.println("Received a request to count " + itemName + ".");
+			
+			PreparedStatement st = DBInteractor.getConnection()
+					.prepareStatement("SELECT item_amount FROM item WHERE item_name = ?;");
+			st.setString(1, itemName);
+			ResultSet rs = st.executeQuery();
+			int res = 0;
+			if (rs.next())
+				res = rs.getInt("item_amount");
+			st.close();
+			rs.close();
+			return res;
 		}
-		System.out.println("Received a request to count the number of " + itemName + " in the storage.");
-		return 0;
 	}
 	
 	/* Command 1
@@ -26,16 +36,33 @@ public class Storage {
 	 *   0-3   amount
 	 *   4-end name
 	 */
-	public static void addItems(String name, int amount) {
-		synchronized (items) {
-			for (int pos = 0; pos < items.size(); pos++) {
-				if (items.get(pos).getName().equals(name)) {
-					items.get(pos).add(amount);
-					break;
-				}
+	public static void addItem(String name, int amount) throws SQLException {
+		synchronized (locker) {
+			System.out.println("Adding " + amount + " units of " + name + " to the storage.");
+			
+			PreparedStatement st = DBInteractor.getConnection().prepareStatement(
+					"SELECT * FROM item WHERE item_name = ?;", ResultSet.CONCUR_UPDATABLE);
+			st.setString(1, name);
+			ResultSet rs = st.executeQuery();
+			if (rs.next()) {
+				st.close();
+				rs.close();
+				st = DBInteractor.getConnection().prepareStatement(
+						"UPDATE item SET item_amount = GREATEST(0, item_amount + ?) WHERE item_name = ?;");
+				st.setInt(1, amount);
+				st.setString(2, name);
+				st.executeUpdate();
+				st.close();
+			} else {
+				st.close();
+				rs.close();
+				st = DBInteractor.getConnection().prepareStatement(
+						"INSERT INTO item (item_name, item_amount) VALUES (?, GREATEST(0, ?));");
+				st.setString(1, name);
+				st.setInt(2, amount);
+				st.executeUpdate();
 			}
 		}
-		System.out.println(amount + " units of " + name + " have been added to the storage.");
 	}
 	
 	/* Command 2
@@ -43,22 +70,24 @@ public class Storage {
 	 *   0-3   amount
 	 *   4-end name
 	 */
-	public static void subtractItems(String name, int amount) {
-		addItems(name, -amount);
+	public static void subtractItem(String name, int amount) throws SQLException {
+		addItem(name, -amount);
 	}
 	
 	/* Command 3
 	 * Format of the message: 
 	 *   0-end name
 	 */
-	public static void addGroup(String name) {
-		synchronized (groups) {
-			for (int i = 0; i < groups.size(); i++)
-				if (groups.get(i).getName().equals(name))
-					return;
-			groups.add(new Group(name));
+	public static void addGroup(String name) throws SQLException {
+		synchronized (locker) {
+			System.out.println("Creating group " + name + ".");
+			
+			PreparedStatement st = DBInteractor.getConnection().prepareStatement(
+					"INSERT INTO `group` (group_name) VALUES (?);");
+			st.setString(1, name);
+			st.executeUpdate();
+			st.close();
 		}
-		System.out.println("A group " + name + " was created.");
 	}
 
 	/* Command 4
@@ -67,30 +96,19 @@ public class Storage {
 	 *   4-Len+3   itemName
 	 *   Len+4-end groupName
 	 */
-	public static void addItemToGroup(String itemName, String groupName) {
-		synchronized (groups) {
-			boolean success = false;
-			for (int i = 0; i < groups.size(); i++) {
-				if (groups.get(i).getName().equals(groupName)) {
-					groups.get(i).addItem(itemName);
-					success = true;
-					break;
-				}
-			}
-			if (!success) {
-				groups.add(new Group(groupName));
-				groups.get(groups.size()-1).addItem(itemName);
-			}
+	public static void addItemToGroup(String itemName, String groupName) throws SQLException {
+		synchronized (locker) {
+			System.out.println("Adding item " + itemName + " to group " + groupName + '.');
+			
+			PreparedStatement st = DBInteractor.getConnection().prepareStatement(
+					"INSERT INTO item_group (item_id, group_id) VALUES (" +
+					"(SELECT item_id FROM item WHERE item_name = ?), " +
+					"(SELECT group_id FROM `group` WHERE group_name = ?));");
+			st.setString(1, itemName);
+			st.setString(2, groupName);
+			st.executeUpdate();
+			st.close();
 		}
-		synchronized (items) {
-			boolean contains = false;
-			for (Item i : items)
-				if (i.getName().equals(itemName)) contains = true;
-			if (!contains) {
-				items.add(new Item(itemName, 0, 0));
-			}
-		}
-		System.out.println("An item " + itemName + " was successfully added to group " + groupName + '.');
 	}
 	
 	/* Command 5
@@ -98,48 +116,93 @@ public class Storage {
 	 *   0-3   price
 	 *   4-end itemName
 	 */
-	public static void setPrice(String itemName, int price) {
-		synchronized (items) {
-			for (int i = 0; i < items.size(); i++) {
-				if (items.get(i).getName().equals(itemName)) {
-					items.get(i).setPrice(price);
-				}
+	public static void setPrice(String itemName, int price) throws SQLException {
+		synchronized (locker) {
+			System.out.println("Setting the price of " + itemName + " to " + price + '.');
+			
+			PreparedStatement st = DBInteractor.getConnection().prepareStatement(
+					"UPDATE item SET item_price = ? WHERE item_name = ?;");
+			st.setBigDecimal(1, new BigDecimal(price).scaleByPowerOfTen(-2));
+			st.setString(2, itemName);
+			st.executeUpdate();
+			st.close();
+		}
+	}
+	
+	/* Command 6
+	 * Format of the message: 
+	 *   0-end item
+	 */
+	public static void deleteItem(String item) throws SQLException {
+		synchronized (locker) {
+			System.out.println("Deleting item " + item + '.');
+			
+			PreparedStatement st = DBInteractor.getConnection().prepareStatement(
+					"DELETE FROM item WHERE item_name = ?;");
+			st.setString(1, item);
+			st.executeUpdate();
+			st.close();
+		}
+	}
+	
+	/* Command 7
+	 * Format of the message: 
+	 *   0-end group
+	 */
+	public static void deleteGroup(String group) throws SQLException {
+		synchronized (locker) {
+			System.out.println("Deleting group " + group + '.');
+			
+			PreparedStatement st = DBInteractor.getConnection().prepareStatement(
+					"DELETE FROM `group` WHERE group_name = ?;");
+			st.setString(1, group);
+			st.executeUpdate();
+			st.close();
+		}
+	}
+	
+	/* Command 8
+	 * Format of the message: 
+	 *   0-end group
+	 */
+	public static ArrayList<Item> getItemsInGroup(String group) throws SQLException {
+		synchronized (locker) {
+			System.out.println("Getting items in group " + group + '.');
+			
+			PreparedStatement st = DBInteractor.getConnection().prepareStatement(
+					"SELECT item_name, item_amount, item_price " +
+					"FROM `group` INNER JOIN item_group ON `group`.group_id = item_group.group_id " +
+					"INNER JOIN item ON item_group.item_id = item.item_id " +
+					"WHERE group_name = ?;");
+			st.setString(1, group);
+			ResultSet rs = st.executeQuery();
+			ArrayList<Item> res = new ArrayList<>();
+			while (rs.next()) {
+				String name = rs.getString("item_name");
+				int amount = rs.getInt("item_amount");
+				int price = (int)(rs.getBigDecimal("item_price").floatValue()*100);
+				res.add(new Item(name, amount, price));
 			}
-		}
-		System.out.println("The price of item " + itemName + " has been set to " + price + '.');
-	}
-	
-	public static int totalItems() {
-		int counter = 0;
-		for (Item i : items) {
-			counter += i.getAmount();
-		}
-		return counter;
-	}
-	
-	public static Group getGroup(String groupName) {
-		for (Group g : groups) {
-			if (g.getName().equals(groupName)) return g;
-		}
-		return null;
-	}
-	
-	public static int getPrice(String itemName) {
-		for (Item i : items) {
-			if (i.getName().equals(itemName)) {
-				return i.getPrice();
-			}
-		}
-		return 0;
-	}
-	
-	public static void clear() {
-		synchronized (items) {
-			items.clear();
-		}
-		synchronized (groups) {
-			groups.clear();
+			st.close();
+			rs.close();
+			return res;
 		}
 	}
 	
+	public static int getPrice(String itemName) throws SQLException {
+		synchronized (locker) {
+			System.out.println("Received a request to check the price of " + itemName + ".");
+			
+			PreparedStatement st = DBInteractor.getConnection()
+					.prepareStatement("SELECT item_price FROM item WHERE item_name = ?;");
+			st.setString(1, itemName);
+			ResultSet rs = st.executeQuery();
+			int res = 0;
+			if (rs.next())
+				res = (int) (rs.getBigDecimal("item_price").floatValue() * 100);
+			st.close();
+			rs.close();
+			return res;
+		}
+	}
 }

@@ -71,4 +71,12 @@ public class Generator {
 		
 		return new Message((byte) 0, 5, 0, message);
 	}
+	
+	public static Message commandDeleteItem(String itemName) {
+		return new Message((byte) 0, 6, 0, itemName.getBytes());
+	}
+	
+	public static Message commandDeleteGroup(String groupName) {
+		return new Message((byte) 0, 7, 0, groupName.getBytes());
+	}
 }
