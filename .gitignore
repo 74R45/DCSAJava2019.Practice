@@ -1,1 +1,6 @@
-/target/
+# Don't track content of these folders
+target/
+.settings/
+
+# Packages #
+*.jar
