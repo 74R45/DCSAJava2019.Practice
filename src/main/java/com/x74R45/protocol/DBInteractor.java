@@ -5,6 +5,7 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 
 public class DBInteractor {
+
 	private static Connection con;
 	
 	public static void initialize() {

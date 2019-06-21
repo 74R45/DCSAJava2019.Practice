@@ -205,4 +205,83 @@ public class Storage {
 			return res;
 		}
 	}
+	
+	public static Item getItem(int id) throws SQLException {
+		synchronized (locker) {
+			PreparedStatement st = DBInteractor.getConnection()
+					.prepareStatement("SELECT * FROM item WHERE item_id = ?;");
+			st.setInt(1, id);
+			ResultSet rs = st.executeQuery();
+			Item res = null;
+			if (rs.next())
+				res = new Item(rs.getString("item_name"),
+							   rs.getInt("item_amount"),
+							   rs.getInt("item_price"),
+							   rs.getInt("item_id"));
+			st.close();
+			rs.close();
+			if (res == null)
+				throw new SQLException();
+			return res;
+		}
+	}
+	
+	public static void changeItem(Item item) throws SQLException {
+		synchronized (locker) {
+			PreparedStatement st = DBInteractor.getConnection()
+					.prepareStatement("UPDATE item SET item_name = ?, item_amount = ?, "
+									+ "item_price = ? WHERE item_id = ?;");
+			st.setString(1, item.getName());
+			st.setInt(2, item.getAmount());
+			st.setInt(3, item.getPrice());
+			st.setInt(4, item.getId());
+			st.executeUpdate();
+			st.close();
+		}
+	}
+	
+	public static int createItem(Item item) throws SQLException {
+		synchronized (locker) {
+			PreparedStatement st = DBInteractor.getConnection()
+					.prepareStatement("INSERT INTO item (item_name, item_amount, item_price)"
+									+ "VALUES (?, ?, ?);");
+			st.setString(1, item.getName());
+			st.setInt(2, item.getAmount());
+			st.setInt(3, item.getPrice());
+			st.executeUpdate();
+			st.close();
+			
+			st = DBInteractor.getConnection()
+					.prepareStatement("SELECT * FROM item WHERE item_name = ?;");
+			st.setString(1, item.getName());
+			ResultSet rs = st.executeQuery();
+			int res = 0;
+			if (rs.next())
+				res = rs.getInt("item_id");
+			rs.close();
+			st.close();
+			return res;
+		}
+	}
+	
+	public static void deleteItem(int id) throws SQLException {
+		synchronized (locker) {
+			PreparedStatement st = DBInteractor.getConnection()
+					.prepareStatement("DELETE FROM item WHERE item_id = ?;");
+			st.setInt(1, id);
+			st.executeUpdate();
+			st.close();
+		}
+	}
+	
+	public static boolean checkUser(String login, String password) throws SQLException {
+		PreparedStatement st = DBInteractor.getConnection()
+				.prepareStatement("SELECT * FROM user WHERE user_login = ? AND user_password = ?;");
+		st.setString(1, login);
+		st.setString(2, password);
+		ResultSet rs = st.executeQuery();
+		if (rs.next())
+			return true;
+		return false;
+	}
 }

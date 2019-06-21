@@ -5,15 +5,15 @@
   <artifactId>Kreshchenko_Practice1</artifactId>
   <packaging>jar</packaging>
   <version>1.0-SNAPSHOT</version>
-  <name>Kreshchenko_Practice1</name>
+  <name>Kreshchenko_Practice5</name>
   <url>http://maven.apache.org</url>
   
   <properties>
 	<!-- https://maven.apache.org/general.html#encoding-warning -->
   	<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		
-  	<maven.compiler.source>1.8</maven.compiler.source>
-  	<maven.compiler.target>1.8</maven.compiler.target>
+	
+  	<maven.compiler.source>1.9</maven.compiler.source>
+  	<maven.compiler.target>1.9</maven.compiler.target>
   </properties>
   
   <dependencies>
@@ -33,6 +33,48 @@
       <artifactId>mysql-connector-java</artifactId>
       <version>8.0.16</version>
     </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-core</artifactId>
+      <version>2.7.3</version>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+      <version>2.7.3</version>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-annotations</artifactId>
+      <version>2.7.3</version>
+    </dependency>
+    <dependency>
+      <groupId>io.jsonwebtoken</groupId>
+      <artifactId>jjwt-api</artifactId>
+      <version>0.10.5</version>
+	</dependency>
+	<dependency>
+      <groupId>io.jsonwebtoken</groupId>
+      <artifactId>jjwt-impl</artifactId>
+      <version>0.10.5</version>
+      <scope>runtime</scope>
+	</dependency>
+	<dependency>
+      <groupId>io.jsonwebtoken</groupId>
+      <artifactId>jjwt-jackson</artifactId>
+      <version>0.10.5</version>
+      <scope>runtime</scope>
+	</dependency>
+	<dependency>
+    <groupId>com.googlecode.json-simple</groupId>
+      <artifactId>json-simple</artifactId>
+      <version>1.1</version>
+	</dependency>
+	<dependency>
+      <groupId>javax.xml.bind</groupId>
+      <artifactId>jaxb-api</artifactId>
+      <version>2.1</version>
+	</dependency>
   </dependencies>
   
   <build>
